@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Staff Operations Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { touch-action: manipulation; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        input:focus { outline: 3px solid #f59e0b; }
+        
+        .grid-pos { display: grid; grid-template-columns: 1fr auto; gap: 2px; }
+        .minus-btn { width: 60px; background-color: #475569; color: #ffffff; border-bottom: 6px solid #1e293b; }
+        .minus-btn:active { background-color: #64748b; transform: scale(0.95); }
+    </style>
+</head>
+<body class="bg-slate-900 font-sans min-h-screen text-slate-100 overflow-x-hidden">
+
+    <!-- LOGIN & STATION PICKER -->
+    <div id="loginScreen" class="fixed inset-0 z-[200] bg-slate-900 flex flex-col items-center justify-center p-4">
+        <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div class="flex flex-col items-center">
+                <h2 class="text-amber-500 text-4xl font-black uppercase tracking-tighter mb-6">Staff PIN</h2>
+                <div id="pinInputDisplay" class="flex gap-4 mb-8">
+                    <div class="pin-dot w-6 h-6 rounded-full border-2 border-white/20 transition-all duration-200"></div>
+                    <div class="pin-dot w-6 h-6 rounded-full border-2 border-white/20 transition-all duration-200"></div>
+                    <div class="pin-dot w-6 h-6 rounded-full border-2 border-white/20 transition-all duration-200"></div>
+                    <div class="pin-dot w-6 h-6 rounded-full border-2 border-white/20 transition-all duration-200"></div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <button onclick="handlePinInput(1)" class="w-20 h-20 rounded-3xl bg-white/10 text-white text-4xl font-bold active:bg-white/30 border border-white/10">1</button>
+                    <button onclick="handlePinInput(2)" class="w-20 h-20 rounded-3xl bg-white/10 text-white text-4xl font-bold active:bg-white/30 border border-white/10">2</button>
+                    <button onclick="handlePinInput(3)" class="w-20 h-20 rounded-3xl bg-white/10 text-white text-4xl font-bold active:bg-white/30 border border-white/10">3</button>
+                    <button onclick="handlePinInput(4)" class="w-20 h-20 rounded-3xl bg-white/10 text-white text-4xl font-bold active:bg-white/30 border border-white/10">4</button>
+                    <button onclick="handlePinInput(5)" class="w-20 h-20 rounded-3xl bg-white/10 text-white text-4xl font-bold active:bg-white/30 border border-white/10">5</button>
+                    <button onclick="handlePinInput(6)" class="w-20 h-20 rounded-3xl bg-white/10 text-white text-4xl font-bold active:bg-white/30 border border-white/10">6</button>
+                    <button onclick="handlePinInput(7)" class="w-20 h-20 rounded-3xl bg-white/10 text-white text-4xl font-bold active:bg-white/30 border border-white/10">7</button>
+                    <button onclick="handlePinInput(8)" class="w-20 h-20 rounded-3xl bg-white/10 text-white text-4xl font-bold active:bg-white/30 border border-white/10">8</button>
+                    <button onclick="handlePinInput(9)" class="w-20 h-20 rounded-3xl bg-white/10 text-white text-4xl font-bold active:bg-white/30 border border-white/10">9</button>
+                    <button onclick="clearPin()" class="w-20 h-20 rounded-3xl bg-red-600/20 text-red-400 font-black uppercase text-xs border border-red-500/20">Clear</button>
+                    <button onclick="handlePinInput(0)" class="w-20 h-20 rounded-3xl bg-white/10 text-white text-4xl font-bold active:bg-white/30 border border-white/10">0</button>
+                    <button onclick="deleteLast()" class="w-20 h-20 rounded-3xl bg-white/5 text-white/40 font-black uppercase text-xs border border-white/5">Del</button>
+                </div>
+            </div>
+
+            <div id="stationPicker" class="opacity-20 pointer-events-none transition-all duration-500 flex flex-col gap-6">
+                <h2 class="text-white text-2xl font-black uppercase tracking-widest text-center">Launch</h2>
+                <button onclick="startStation('BEER BAR')" class="w-full bg-amber-500 text-white p-8 rounded-[40px] font-black text-3xl uppercase border-b-8 border-amber-700 shadow-xl active:scale-95">Beer Bar</button>
+                <button onclick="startStation('BUCKET BAR')" class="w-full bg-blue-600 text-white p-8 rounded-[40px] font-black text-3xl uppercase border-b-8 border-blue-800 shadow-xl active:scale-95">Bucket Bar</button>
+                <button onclick="startStation('RECEPTION')" class="w-full bg-emerald-600 text-white p-8 rounded-[40px] font-black text-3xl uppercase border-b-8 border-emerald-800 shadow-xl active:scale-95">Reception</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTENT -->
+    <main id="appContent" class="hidden w-full max-w-full p-2 md:p-4">
+        <header class="flex justify-between items-center mb-2 bg-slate-800 px-6 py-2 rounded-2xl shadow-xl border border-white/5">
+            <div class="flex items-center gap-6">
+                <h1 id="headerTitle" class="text-2xl font-black uppercase tracking-tighter text-amber-500">STATION</h1>
+                <p id="activeStaffDisplay" class="text-[10px] font-bold uppercase tracking-widest opacity-60">ID: 0000</p>
+            </div>
+            <button onclick="handleLogout()" class="bg-slate-700 hover:bg-slate-600 px-4 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest text-white border border-white/5 transition-all">Back to Menu</button>
+        </header>
+
+        <!-- BAR VIEW -->
+        <div id="barView" class="hidden space-y-6">
+            <div id="barSectionFree" class="space-y-2">
+                <h3 class="text-emerald-500 font-black uppercase text-[10px] tracking-widest pl-2">Free Items</h3>
+                <div id="barGridFree" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+            </div>
+            <div id="barSectionPaid" class="space-y-2">
+                <h3 class="text-amber-500 font-black uppercase text-[10px] tracking-widest pl-2">Paid Items</h3>
+                <div id="barGridPaid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+            </div>
+            <footer class="flex flex-col sm:flex-row gap-4 mt-8 pb-10">
+                <button onclick="togglePayoutModal()" class="flex-1 bg-red-600/10 text-red-500 border border-red-600/20 py-6 rounded-3xl font-black uppercase text-xl">Expense</button>
+                <button onclick="openClosing()" class="flex-[2] bg-slate-100 text-slate-900 py-6 rounded-3xl font-black text-2xl uppercase tracking-widest shadow-2xl">Shift Close</button>
+            </footer>
+        </div>
+
+        <!-- RECEPTION VIEW -->
+        <div id="receptionView" class="hidden space-y-4">
+            <div class="bg-slate-800 p-6 rounded-[40px] border border-white/5 shadow-xl">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                    <div>
+                        <h3 class="text-amber-500 font-black uppercase tracking-widest text-xl mb-1">Ticket Packages</h3>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-tighter">Total Tkt Sales: <span id="ticketTotalVal" class="text-emerald-500 font-black text-lg ml-2">0 THB</span></p>
+                    </div>
+                    <div class="flex items-center bg-slate-900 rounded-2xl px-4 py-1.5 gap-3">
+                        <span class="text-[10px] font-black text-slate-500 uppercase">Base</span>
+                        <input type="number" id="ticketBaseInput" value="1000" onchange="updateTicketPrice()" class="bg-transparent text-2xl font-black text-white w-24 outline-none text-right">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="ticketPackageGrid"></div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <button onclick="addReceptionJournal('Towel', 50)" class="h-24 bg-rose-500 rounded-3xl font-black text-xl border-b-8 border-rose-700 active:scale-95 uppercase leading-tight">Towel (50)</button>
+                <button onclick="addReceptionJournal('Lock', 50)" class="h-24 bg-pink-500 rounded-3xl font-black text-xl border-b-8 border-pink-700 active:scale-95 uppercase leading-tight">Lock (50)</button>
+                <button onclick="addReceptionJournal('Tournament', 100)" class="h-24 bg-red-500 rounded-3xl font-black text-xl border-b-8 border-red-700 active:scale-95 leading-tight uppercase">Tournament (100)</button>
+                <button onclick="openPricePad('Laundry')" class="h-24 bg-orange-500 rounded-3xl font-black text-xl border-b-8 border-orange-700 active:scale-95 italic uppercase leading-tight">Laundry</button>
+                <button onclick="openPricePad('Taxi')" class="h-24 bg-amber-500 rounded-3xl font-black text-xl border-b-8 border-amber-700 active:scale-95 italic uppercase leading-tight">Taxi</button>
+                <button onclick="openPricePad('Travel')" class="h-24 bg-yellow-500 text-slate-900 rounded-3xl font-black text-xl border-b-8 border-yellow-700 active:scale-95 italic uppercase leading-tight">Travel</button>
+                <button onclick="addReceptionJournal('Ferry', 200)" class="h-24 bg-lime-500 text-slate-900 rounded-3xl font-black text-sm border-b-8 border-lime-700 active:scale-95 leading-tight uppercase">Ferry<br>(200)</button>
+                <button onclick="addReceptionJournal('Bag Storage', 1000)" class="h-24 bg-green-500 rounded-3xl font-black text-sm border-b-8 border-green-700 active:scale-95 leading-tight uppercase">Bag Storage<br>(1k)</button>
+                <button onclick="addReceptionJournal('TM30s', 150)" class="h-24 bg-emerald-500 rounded-3xl font-black text-sm border-b-8 border-emerald-700 active:scale-95 uppercase leading-tight">TM30s<br>(150)</button>
+                <button onclick="addReceptionJournal('VIP wristband', 200)" class="h-24 bg-teal-500 rounded-3xl font-black text-sm border-b-8 border-teal-700 active:scale-95 uppercase leading-tight">VIP<br>(200)</button>
+                <button onclick="openPricePad('Drink')" class="h-24 bg-cyan-500 rounded-3xl font-black text-xl border-b-8 border-cyan-700 active:scale-95 italic uppercase leading-tight">Drink</button>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-4 items-stretch pb-10">
+                <div class="flex-[3] bg-slate-800 rounded-[32px] p-5 shadow-xl border border-white/5 flex flex-col min-h-[160px]">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-slate-500 font-black uppercase text-[10px] tracking-widest">Daily Sales Journal</h3>
+                        <div class="text-emerald-500 font-black text-3xl tracking-tighter" id="receptionRunningTotal">0 THB</div>
+                    </div>
+                    <div class="overflow-y-auto max-h-[140px] no-scrollbar">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="text-[8px] uppercase text-slate-600 border-b border-white/5">
+                                <tr><th class="pb-1">Item</th><th class="pb-1 text-right">THB</th><th class="pb-1 text-right">Time</th></tr>
+                            </thead>
+                            <tbody id="receptionJournalBody" class="text-[11px] font-bold text-slate-300">
+                            </tbody>
+                        </table>
+                        <div id="noSalesPlaceholder" class="text-slate-600 italic text-center py-6 text-xs uppercase tracking-widest opacity-20">No Sales recorded</div>
+                    </div>
+                </div>
+                <div class="flex-1 flex flex-col gap-3">
+                    <button onclick="togglePayoutModal()" class="flex-1 bg-red-600/10 text-red-500 border border-red-600/20 py-3 rounded-2xl font-black uppercase text-xs">Expense</button>
+                    <button onclick="openClosing()" class="flex-[2] bg-slate-100 text-slate-900 py-3 rounded-2xl font-black text-lg uppercase tracking-widest shadow-xl">Shift Close</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- CLOSING VIEW -->
+    <section id="closingView" class="hidden max-w-5xl mx-auto p-4 pb-40">
+        <button onclick="backToStation()" class="text-amber-500 font-black mb-8 text-xl uppercase italic tracking-tighter">← BACK TO TRACKING</button>
+        <div class="space-y-6">
+            <div class="bg-slate-800 p-8 rounded-[40px] shadow-2xl">
+                <h3 class="text-slate-500 font-black uppercase text-xs tracking-widest mb-6 border-b border-white/5 pb-2">Cash Count</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div class="space-y-2"><label class="text-xs font-black text-slate-400 uppercase">1000s</label><input type="number" id="cash_1000" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl font-black text-3xl text-amber-500 text-center"></div>
+                    <div class="space-y-2"><label class="text-xs font-black text-slate-400 uppercase">500s</label><input type="number" id="cash_500" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl font-black text-3xl text-amber-500 text-center"></div>
+                    <div class="space-y-2"><label class="text-xs font-black text-slate-400 uppercase">100s</label><input type="number" id="cash_100" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl font-black text-3xl text-amber-500 text-center"></div>
+                    <div class="space-y-2"><label class="text-xs font-black text-slate-400 uppercase">50s</label><input type="number" id="cash_50" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl font-black text-3xl text-amber-500 text-center"></div>
+                    <div class="space-y-2"><label class="text-xs font-black text-slate-400 uppercase">20s</label><input type="number" id="cash_20" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl font-black text-3xl text-amber-500 text-center"></div>
+                    <div class="space-y-2"><label class="text-xs font-black text-slate-400 uppercase">Coins</label><input type="number" id="cash_coins" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl font-black text-3xl text-amber-500 text-center" placeholder="0.0"></div>
+                </div>
+            </div>
+            <div class="bg-slate-800 p-8 rounded-[40px] shadow-2xl">
+                <h3 class="text-slate-500 font-black uppercase text-xs tracking-widest mb-6 border-b border-white/5 pb-2">Float Clips</h3>
+                <div class="grid grid-cols-3 sm:grid-cols-6 gap-4">
+                    <div class="space-y-2"><label class="text-[10px] font-black text-red-500 uppercase">Red</label><input type="number" id="clip_red" class="w-full bg-slate-900 border border-white/5 p-3 rounded-xl font-black text-center text-xl"></div>
+                    <div class="space-y-2"><label class="text-[10px] font-black text-white uppercase">White</label><input type="number" id="clip_white" class="w-full bg-slate-900 border border-white/5 p-3 rounded-xl font-black text-center text-xl"></div>
+                    <div class="space-y-2"><label class="text-[10px] font-black text-amber-500 uppercase">Yellow</label><input type="number" id="clip_yellow" class="w-full bg-slate-900 border border-white/5 p-3 rounded-xl font-black text-center text-xl"></div>
+                    <div class="space-y-2"><label class="text-[10px] font-black text-pink-400 uppercase">Pink</label><input type="number" id="clip_pink" class="w-full bg-slate-900 border border-white/5 p-3 rounded-xl font-black text-center text-xl"></div>
+                    <div class="space-y-2"><label class="text-[10px] font-black text-blue-500 uppercase">Blue</label><input type="number" id="clip_blue" class="w-full bg-slate-900 border border-white/5 p-3 rounded-xl font-black text-center text-xl"></div>
+                    <div class="space-y-2"><label class="text-[10px] font-black text-green-500 uppercase">Green</label><input type="number" id="clip_green" class="w-full bg-slate-900 border border-white/5 p-3 rounded-xl font-black text-center text-xl"></div>
+                </div>
+            </div>
+            <button onclick="submitShift()" id="submitBtn" class="w-full bg-emerald-600 text-white py-8 rounded-[50px] font-black text-3xl uppercase tracking-widest shadow-2xl active:scale-95 transition-all">Submit Final Report</button>
+        </div>
+    </section>
+
+    <!-- MODALS -->
+    <div id="pricePadModal" class="fixed inset-0 bg-slate-900 z-[300] hidden flex flex-col items-center justify-center p-4">
+        <h2 id="pricePadTitle" class="text-amber-500 text-3xl font-black uppercase mb-4 tracking-tighter">PRICE PAD</h2>
+        <input type="number" id="keyboardInput" class="bg-transparent text-7xl font-black text-white mb-10 text-center w-full outline-none" value="0" oninput="syncPadFromKeyboard(this.value)">
+        <div class="grid grid-cols-3 gap-4 w-full max-w-sm">
+            <button onclick="handlePadInput('1')" class="h-20 bg-white/10 rounded-2xl text-4xl font-bold border border-white/5 text-white">1</button>
+            <button onclick="handlePadInput('2')" class="h-20 bg-white/10 rounded-2xl text-4xl font-bold border border-white/5 text-white">2</button>
+            <button onclick="handlePadInput('3')" class="h-20 bg-white/10 rounded-2xl text-4xl font-bold border border-white/5 text-white">3</button>
+            <button onclick="handlePadInput('4')" class="h-20 bg-white/10 rounded-2xl text-4xl font-bold border border-white/5 text-white">4</button>
+            <button onclick="handlePadInput('5')" class="h-20 bg-white/10 rounded-2xl text-4xl font-bold border border-white/5 text-white">5</button>
+            <button onclick="handlePadInput('6')" class="h-20 bg-white/10 rounded-2xl text-4xl font-bold border border-white/5 text-white">6</button>
+            <button onclick="handlePadInput('7')" class="h-20 bg-white/10 rounded-2xl text-4xl font-bold border border-white/5 text-white">7</button>
+            <button onclick="handlePadInput('8')" class="h-20 bg-white/10 rounded-2xl text-4xl font-bold border border-white/5 text-white">8</button>
+            <button onclick="handlePadInput('9')" class="h-20 bg-white/10 rounded-2xl text-4xl font-bold border border-white/5 text-white">9</button>
+            <button onclick="handlePadInput('00')" class="h-20 bg-white/10 rounded-2xl text-4xl font-bold text-white">00</button>
+            <button onclick="handlePadInput('0')" class="h-20 bg-white/10 rounded-2xl text-4xl font-bold text-white">0</button>
+            <button onclick="clearPad()" class="h-20 bg-red-600/20 rounded-2xl font-black text-xl text-red-400">CLR</button>
+            <button onclick="confirmPricePad()" class="col-span-3 h-24 bg-emerald-600 rounded-3xl font-black text-3xl text-white mt-4 uppercase">Add to Sales</button>
+            <button onclick="closePricePad()" class="col-span-3 text-slate-500 font-bold uppercase py-4 text-center">Cancel</button>
+        </div>
+    </div>
+
+    <div id="payoutModal" class="fixed inset-0 bg-black/90 z-[300] hidden flex items-center justify-center p-6">
+        <div class="bg-slate-800 w-full max-w-lg rounded-[40px] p-10 border border-white/5">
+            <h2 class="text-2xl font-black text-white mb-6 uppercase tracking-widest text-center">Log Payout</h2>
+            <input type="text" id="payoutReason" class="w-full bg-slate-900 border border-white/10 p-6 rounded-2xl text-white mb-4 text-xl" placeholder="Reason...">
+            <input type="number" id="payoutAmount" class="w-full bg-slate-900 border border-white/10 p-6 rounded-2xl text-5xl font-black text-red-500 mb-8" placeholder="0">
+            <div class="flex gap-4">
+                <button onclick="togglePayoutModal()" class="flex-1 bg-white/5 py-4 rounded-2xl font-bold uppercase text-white">Cancel</button>
+                <button onclick="addPayout()" class="flex-1 bg-red-600 py-4 rounded-2xl font-black uppercase text-white shadow-lg">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI TOAST -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-white text-slate-900 px-10 py-5 rounded-full shadow-2xl font-black uppercase tracking-widest opacity-0 transition-all duration-300 pointer-events-none z-[400]">
+        ✅ Shift Data Submitted!
+    </div>
+
+    <script>
+        let state = {
+            pin: '', station: null, ticketBase: 1000, 
+            counts: {}, packageCounts: { TTB: 0, TT: 0, TB: 0, TAB: 0, T: 0, TS: 0 }, 
+            payouts: [], journal: []
+        };
+
+        const RAINBOW = [
+            'bg-rose-500 border-rose-700', 'bg-orange-500 border-orange-700', 'bg-amber-500 border-amber-700', 'bg-yellow-500 border-yellow-700 text-slate-900',
+            'bg-lime-500 border-lime-700 text-slate-900', 'bg-green-500 border-green-700', 'bg-emerald-500 border-emerald-700', 'bg-teal-500 border-teal-700',
+            'bg-cyan-500 border-cyan-700 text-slate-900', 'bg-sky-500 border-sky-700', 'bg-blue-500 border-blue-700'
+        ];
+
+        const STATION_CONFIGS = {
+            'BEER BAR': {
+                'FREE': [
+                    { id: 'wristband', label: 'Dutchie Wristband' }, { id: 'beer', label: 'Dutchie Beer' }, { id: 'c_beer', label: 'Beer Coupon' },
+                    { id: 'c_shot', label: 'Shot Coupon' }, { id: 'c_vol', label: 'Volunteer Coupon' }, { id: 'c_dj', label: 'DJ Coupon' }
+                ],
+                'PAID': []
+            },
+            'BUCKET BAR': {
+                'FREE': [
+                    { id: 'shot_flyer', label: 'Shot Flyer' }, { id: 'c_bucket', label: 'Bucket Coupon' }, { id: 'wristband', label: 'Dutchie Wristband' },
+                    { id: 'beer', label: 'Dutchie Drink' }, { id: 'c_vol', label: 'Volunteer Coupon' }, { id: 'c_shot', label: 'Shot Coupon' },
+                    { id: 'vip', label: 'VIP Wristband' }, { id: 'c_dj', label: 'DJ Coupon' }
+                ],
+                'PAID': [
+                    { id: 'molly', label: 'Molly (1k)' }, { id: 'joss', label: 'Joss (100)' }, { id: 'j', label: 'J (100)' }
+                ]
+            }
+        };
+
+        const TICKET_PACKAGES = [
+            { id: 'TTB', label: 'TKT / TAXI / BUCKET', calc: (b) => b + 150 + 250, desc: 'Tkt + 150T + 250B' },
+            { id: 'TT', label: 'TKT / TAXI', calc: (b) => b + 200, desc: 'Tkt + 200T' },
+            { id: 'TB', label: 'TKT / BUCKET', calc: (b) => b + 250, desc: 'Tkt + 250B' },
+            { id: 'TAB', label: 'TAXI / BUCKET', calc: () => 400, desc: '150T + 250B' },
+            { id: 'T', label: 'TICKET', calc: (b) => b, desc: 'Solo' },
+            { id: 'TS', label: 'TAXI', calc: () => 200, desc: 'Solo' }
+        ];
+
+        let tempPin = "";
+        function handlePinInput(n) {
+            if (tempPin.length < 4) {
+                tempPin += n; updatePinDots();
+                if (tempPin.length === 4) document.getElementById('stationPicker').classList.remove('opacity-20', 'pointer-events-none');
+            }
+        }
+        function updatePinDots() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((d, i) => i < tempPin.length ? d.classList.add('bg-amber-500', 'border-amber-500', 'scale-125') : d.classList.remove('bg-amber-500', 'border-amber-500', 'scale-125'));
+        }
+        function clearPin() { tempPin = ""; updatePinDots(); document.getElementById('stationPicker').classList.add('opacity-20', 'pointer-events-none'); }
+        function deleteLast() { tempPin = tempPin.slice(0,-1); updatePinDots(); if (tempPin.length < 4) document.getElementById('stationPicker').classList.add('opacity-20', 'pointer-events-none'); }
+
+        function handleLogout() {
+            document.getElementById('appContent').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        function startStation(name) {
+            state.pin = tempPin; state.station = name;
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('appContent').classList.remove('hidden');
+            document.getElementById('headerTitle').innerText = name;
+            document.getElementById('activeStaffDisplay').innerText = "ID: " + state.pin;
+            if (name === 'RECEPTION') {
+                document.getElementById('receptionView').classList.remove('hidden');
+                document.getElementById('barView').classList.add('hidden');
+                renderReceptionPackages();
+                renderJournal();
+            } else {
+                renderBarButtons(name);
+                document.getElementById('barView').classList.remove('hidden');
+                document.getElementById('receptionView').classList.add('hidden');
+            }
+            window.scrollTo(0,0);
+        }
+
+        function renderBarButtons(stationName) {
+            const config = STATION_CONFIGS[stationName];
+            const freeGrid = document.getElementById('barGridFree');
+            const paidGrid = document.getElementById('barGridPaid');
+            const paidSection = document.getElementById('barSectionPaid');
+            freeGrid.innerHTML = ""; paidGrid.innerHTML = "";
+            config.FREE.forEach((item, idx) => { if (!state.counts[item.id]) state.counts[item.id] = 0; freeGrid.innerHTML += createBarBtn(item, idx); });
+            if (config.PAID.length > 0) {
+                paidSection.classList.remove('hidden');
+                config.PAID.forEach((item, idx) => { if (!state.counts[item.id]) state.counts[item.id] = 0; paidGrid.innerHTML += createBarBtn(item, idx + config.FREE.length); });
+            } else paidSection.classList.add('hidden');
+        }
+
+        function createBarBtn(item, colorIdx) {
+            const colorClass = RAINBOW[colorIdx % RAINBOW.length];
+            const currentVal = state.counts[item.id] || 0;
+            return `<div class="grid-pos h-28">
+                <button onclick="adjustBar('${item.id}', 1)" class="${colorClass} rounded-l-3xl border-b-8 flex flex-col items-center justify-center p-3 shadow-lg">
+                    <span class="text-xl font-black uppercase leading-tight text-center tracking-tight">${item.label}</span>
+                    <span id="bar-count-${item.id}" class="text-3xl font-black opacity-60 mt-1">${currentVal}</span>
+                </button>
+                <button onclick="adjustBar('${item.id}', -1)" class="minus-btn rounded-r-3xl flex items-center justify-center text-4xl font-black">-</button>
+            </div>`;
+        }
+
+        function adjustBar(id, delta) { state.counts[id] = Math.max(0, (state.counts[id] || 0) + delta); document.getElementById(`bar-count-${id}`).innerText = state.counts[id]; if (navigator.vibrate) navigator.vibrate(30); }
+
+        function updateTicketPrice() { state.ticketBase = parseInt(document.getElementById('ticketBaseInput').value) || 0; renderReceptionPackages(); recalculateReceptionTotals(); }
+
+        function renderReceptionPackages() {
+            const grid = document.getElementById('ticketPackageGrid');
+            grid.innerHTML = TICKET_PACKAGES.map((pkg) => `
+                <div class="grid-pos h-32">
+                    <button onclick="adjustPackage('${pkg.id}', 1)" class="bg-slate-900 rounded-l-[32px] border border-white/5 flex flex-col justify-center px-4 text-left">
+                        <div class="text-white font-black text-lg leading-tight uppercase tracking-tight">${pkg.label}</div>
+                        <div class="text-xs font-bold text-slate-500 uppercase mt-1 tracking-tighter">${pkg.desc} — <span class="text-emerald-500">${pkg.calc(state.ticketBase)} THB</span></div>
+                        <div id="pkg-count-${pkg.id}" class="text-4xl font-black text-amber-500 mt-1">${state.packageCounts[pkg.id]}</div>
+                    </button>
+                    <button onclick="adjustPackage('${pkg.id}', -1)" class="minus-btn rounded-r-[32px] border border-white/5 flex items-center justify-center text-4xl font-black">-</button>
+                </div>
+            `).join('');
+        }
+
+        function adjustPackage(id, delta) { state.packageCounts[id] = Math.max(0, state.packageCounts[id] + delta); document.getElementById(`pkg-count-${id}`).innerText = state.packageCounts[id]; recalculateReceptionTotals(); if (navigator.vibrate) navigator.vibrate(30); }
+
+        function recalculateReceptionTotals() {
+            let tTotal = 0; let jTotal = 0;
+            TICKET_PACKAGES.forEach(pkg => tTotal += state.packageCounts[pkg.id] * pkg.calc(state.ticketBase));
+            state.journal.forEach(item => jTotal += item.price);
+            document.getElementById('ticketTotalVal').innerText = tTotal.toLocaleString() + " THB";
+            document.getElementById('receptionRunningTotal').innerText = jTotal.toLocaleString() + " THB";
+        }
+
+        function addReceptionJournal(name, price) { state.journal.unshift({ name, price, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) }); recalculateReceptionTotals(); renderJournal(); }
+
+        function renderJournal() {
+            const tbody = document.getElementById('receptionJournalBody');
+            const placeholder = document.getElementById('noSalesPlaceholder');
+            if (state.journal.length === 0) {
+                tbody.innerHTML = ""; placeholder.classList.remove('hidden'); return;
+            }
+            placeholder.classList.add('hidden');
+            tbody.innerHTML = state.journal.map(item => `
+                <tr class="border-b border-white/5 last:border-0">
+                    <td class="py-1 uppercase text-slate-400 truncate">${item.name}</td>
+                    <td class="py-1 text-right text-emerald-500">${item.price}</td>
+                    <td class="py-1 text-right text-slate-600 text-[9px]">${item.time}</td>
+                </tr>
+            `).join('');
+        }
+
+        let padTarget = ""; let padValue = "0";
+        function openPricePad(title) { 
+            padTarget = title; padValue = "0"; 
+            document.getElementById('pricePadTitle').innerText = title; 
+            document.getElementById('keyboardInput').value = "0"; 
+            document.getElementById('pricePadModal').classList.remove('hidden'); 
+            setTimeout(() => document.getElementById('keyboardInput').focus(), 100); 
+        }
+        
+        function syncPadFromKeyboard(val) { padValue = val || "0"; }
+        
+        function handlePadInput(n) { 
+            if (padValue === "0") {
+                if (n === "00") return;
+                padValue = n.toString();
+            } else {
+                padValue += n.toString();
+            }
+            document.getElementById('keyboardInput').value = padValue; 
+        }
+        
+        function clearPad() { padValue = "0"; document.getElementById('keyboardInput').value = "0"; }
+        function closePricePad() { document.getElementById('pricePadModal').classList.add('hidden'); }
+        function confirmPricePad() { const p = parseInt(padValue); if (p > 0) addReceptionJournal(padTarget, p); closePricePad(); }
+        function togglePayoutModal() { document.getElementById('payoutModal').classList.toggle('hidden'); }
+        function addPayout() { const r = document.getElementById('payoutReason').value; const a = parseInt(document.getElementById('payoutAmount').value); if (r && a) { state.payouts.push({ reason: r, amount: a }); togglePayoutModal(); document.getElementById('payoutReason').value = ""; document.getElementById('payoutAmount').value = ""; } }
+        function openClosing() { document.getElementById('appContent').classList.add('hidden'); document.getElementById('closingView').classList.remove('hidden'); window.scrollTo(0,0); }
+        function backToStation() { document.getElementById('closingView').classList.add('hidden'); document.getElementById('appContent').classList.remove('hidden'); }
+        
+        function submitShift() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true; btn.innerText = "SAVING REPORT...";
+
+            const payload = {
+                station: state.station,
+                staff: state.pin,
+                timestamp: new Date().toISOString(),
+                sales: state.station === 'RECEPTION' ? { packages: state.packageCounts, journal: state.journal, ticketBase: state.ticketBase } : state.counts,
+                expenses: state.payouts,
+                cash: {
+                    b1000: parseInt(document.getElementById('cash_1000').value) || 0,
+                    b500: parseInt(document.getElementById('cash_500').value) || 0,
+                    b100: parseInt(document.getElementById('cash_100').value) || 0,
+                    b50: parseInt(document.getElementById('cash_50').value) || 0,
+                    b20: parseInt(document.getElementById('cash_20').value) || 0,
+                    coins: parseFloat(document.getElementById('cash_coins').value) || 0
+                },
+                clips: {
+                    red: parseInt(document.getElementById('clip_red').value) || 0,
+                    white: parseInt(document.getElementById('clip_white').value) || 0,
+                    yellow: parseInt(document.getElementById('clip_yellow').value) || 0,
+                    pink: parseInt(document.getElementById('clip_pink').value) || 0,
+                    blue: parseInt(document.getElementById('clip_blue').value) || 0,
+                    green: parseInt(document.getElementById('clip_green').value) || 0
+                }
+            };
+
+            // ACTUAL BACKEND CONNECTION
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run
+                .withSuccessHandler(() => {
+                    document.getElementById('toast').style.opacity = '1';
+                    setTimeout(() => location.reload(), 2000);
+                })
+                .withFailureHandler((err) => {
+                    btn.disabled = false;
+                    btn.innerText = "RETRY SUBMISSION";
+                    alert("ERROR: " + err.message); // Diagnostic tool
+                })
+                .saveShiftReport(payload);
+            } else {
+                // FALLBACK FOR PREVIEW MODE
+                console.log("Submit Simulation:", payload);
+                document.getElementById('toast').style.opacity = '1';
+                setTimeout(() => location.reload(), 2000);
+            }
+        }
+    </script>
+</body>
+</html>
